@@ -35,10 +35,12 @@ if (userId) localStorage.setItem('userId', userId.toString());
 
   // שמירה אחרי login-as (impersonation)
   saveImpersonation(token: string): void {
+  localStorage.setItem('adminToken', localStorage.getItem('token')!); // ← שמירת טוקן מנהל
   localStorage.setItem('token', token);
   const payload = this.decodeToken(token);
   if (payload) {
-localStorage.setItem('userName', decodeURIComponent(escape(payload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name'] ?? '')));    localStorage.setItem('role', 'User');
+    localStorage.setItem('userName', decodeURIComponent(escape(payload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name'] ?? '')));
+    localStorage.setItem('role', 'User');
     localStorage.setItem('isImpersonating', 'true');
     const userId = payload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier'];
     if (userId) localStorage.setItem('userId', userId.toString());
@@ -49,7 +51,15 @@ localStorage.setItem('userName', decodeURIComponent(escape(payload['http://schem
     const id = localStorage.getItem('userId');
     return id ? parseInt(id) : null;
   }
-
+backToAdmin(): void {
+  const adminToken = localStorage.getItem('adminToken')!;
+  localStorage.setItem('token', adminToken);
+  localStorage.removeItem('adminToken');
+  localStorage.removeItem('isImpersonating');
+  localStorage.setItem('role', 'Admin');
+  localStorage.setItem('userName', 'admin');
+  localStorage.setItem('userId', '0');
+}
   getUserName(): string {
     return localStorage.getItem('userName') ?? '';
   }

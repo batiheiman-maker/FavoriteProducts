@@ -29,11 +29,11 @@ export class Login {
 
     this.auth.login(userName, password).subscribe({
       next: (res: any) => {
-        console.log('role:', res.Role);
+        console.log('role:', res.role);
 
         this.auth.saveSession(res);
 
-        if (res.Role === 'Admin') {
+        if (res.role === 'Admin') {
           this.router.navigate(['/admin']);
         } else {
           this.router.navigate(['/products']);

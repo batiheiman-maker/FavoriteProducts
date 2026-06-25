@@ -1,4 +1,4 @@
-import { Component, OnInit ,ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { ProductsService } from '../services/product';
@@ -13,16 +13,15 @@ import { Auth } from '../services/auth';
 })
 export class Admin implements OnInit {
 
-  users: any[] = [];
-  loading = true;
-  errorMsg = '';
+  users = signal<any[]>([]);
+  loading = signal(true);
+  errorMsg = signal('');
 
   constructor(
-  private productsService: ProductsService,
-  private auth: Auth,
-  private router: Router,
-  private cdr: ChangeDetectorRef
-) {}
+    private productsService: ProductsService,
+    private auth: Auth,
+    private router: Router
+  ) {}
 
   ngOnInit(): void {
     if (!this.auth.isAdmin()) {
@@ -30,15 +29,21 @@ export class Admin implements OnInit {
       return;
     }
 
+    this.loadUsers();
+  }
+
+  loadUsers(): void {
+    this.loading.set(true);
+    this.errorMsg.set('');
+
     this.productsService.getUsers().subscribe({
       next: (users) => {
-       this.users = users;
-this.loading = false;
-this.cdr.detectChanges();
+        this.users.set(users);
+        this.loading.set(false);
       },
       error: () => {
-        this.errorMsg = 'שגיאה בטעינת משתמשים';
-        this.loading = false;
+        this.errorMsg.set('שגיאה בטעינת משתמשים');
+        this.loading.set(false);
       }
     });
   }

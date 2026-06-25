@@ -4,9 +4,11 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.Extensions.Caching.Memory;
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 var builder = WebApplication.CreateBuilder(args);
+builder.Services.AddMemoryCache();
 
 // Add services to the container.
 builder.Services.AddDbContext<AppDbContext>(options =>
@@ -45,9 +47,21 @@ app.UseCors("AllowAngular");
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseHttpsRedirection();
-app.MapGet("/products", async (AppDbContext db) =>
+const string ProductsCacheKey = "products_all";
+
+app.MapGet("/products", async (AppDbContext db, IMemoryCache cache) =>
 {
-    return await db.Products.ToListAsync();
+    var products = await cache.GetOrCreateAsync(ProductsCacheKey, async entry =>
+    {
+        entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5);
+        entry.SlidingExpiration = TimeSpan.FromMinutes(2);
+
+        return await db.Products
+            .AsNoTracking()
+            .ToListAsync();
+    });
+
+    return Results.Ok(products);
 });
 app.MapGet("/users", async (AppDbContext db) =>
 {
