@@ -1,0 +1,28 @@
+<div class="register-container">
+
+  <div class="register-card">
+
+    <h2 class="title">Register</h2>
+
+    <form [formGroup]="registerForm" (ngSubmit)="register()">
+
+      <div class="field">
+        <input type="text" placeholder="User name" formControlName="userName" />
+      </div>
+
+      <div class="field">
+        <input type="password" placeholder="Password" formControlName="password" />
+      </div>
+
+      <button type="submit">הרשמה</button>
+
+    </form>
+
+    <p>
+      כבר יש לך משתמש?
+      <a routerLink="/login">כניסה</a>
+    </p>
+
+  </div>
+
+</div>

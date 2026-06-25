@@ -1,0 +1,46 @@
+<div class="login-container">
+  <div class="login-card">
+
+    <div class="login-logo">🛍</div>
+    <h2>כניסה לחשבון</h2>
+    <p class="subtitle">ברוך הבא! הזן את פרטיך להמשך</p>
+
+    <form [formGroup]="loginForm" (ngSubmit)="login()">
+
+      <div class="field">
+        <label>שם משתמש</label>
+        <input
+          type="text"
+          placeholder="הזן שם משתמש"
+          formControlName="userName"
+        />
+      </div>
+
+      <div class="field">
+        <label>סיסמה</label>
+        <input
+          type="password"
+          placeholder="הזן סיסמה"
+          formControlName="password"
+        />
+      </div>
+
+      @if (errorMsg) {
+        <p class="error">{{ errorMsg }}</p>
+      }
+
+      <button type="submit" class="btn" [disabled]="loginForm.invalid">
+        כניסה
+      </button>
+
+    </form>
+
+    <hr />
+
+    <p class="footer">
+      אין לך משתמש?
+      <a routerLink="/register">הרשמה</a>
+    </p>
+
+  </div>
+</div>
