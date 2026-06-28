@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { environment } from '../../environment/environment';
-import { LoginResponse } from '../models/login-response.model';
+import { LoginResponse } from '../models/login-response';
 
 @Injectable({
   providedIn: 'root'
@@ -20,10 +20,10 @@ export class Auth {
   }
 
   // שמירה אחרי login רגיל
-saveSession(res: any): void {
+saveSession(res: LoginResponse): void {
   localStorage.setItem('token', res.token);
-  localStorage.setItem('userName', res.userName ?? res.UserName);
-  localStorage.setItem('role', res.role ?? res.Role);
+  localStorage.setItem('userName', res.userName ?? res.UserName??'');
+  localStorage.setItem('role', res.role ?? res.Role??'');
 
   const payload = this.decodeToken(res.token);  
  const userId =

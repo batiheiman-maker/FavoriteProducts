@@ -1,14 +1,23 @@
 <div class="products-page">
 
-  <header class="products-header">
-    <div class="header-info">
-      <span>שלום, <strong>{{ userName() }}</strong></span>
-      @if (isImpersonating()) {
-        <span class="impersonating-badge">מצב צפייה כמשתמש</span>
-          <button (click)="backToAdmin()" class="btn-secondary">חזור לניהול</button>
-      }
-    </div>
-  </header>
+ <header class="products-header">
+  <div class="header-info">
+    <span>שלום, <strong>{{ userName() }}</strong></span>
+
+    @if (isImpersonating()) {
+      <span class="impersonating-badge">מצב צפייה כמשתמש</span>
+      <button (click)="backToAdmin()" class="btn-secondary">חזור לניהול</button>
+    }
+  </div>
+
+  <div class="header-actions">
+    @if (isAdmin() && !isImpersonating()) {
+      <button (click)="goToAdmin()" class="btn-secondary">לוח מנהל</button>
+    }
+
+    <button (click)="logout()" class="btn-logout">יציאה</button>
+  </div>
+</header>
 
   <main class="products-main">
     <h2>רשימת מוצרים</h2>
