@@ -26,7 +26,7 @@ export class Register {
     this.auth.register(userName, password).subscribe({
       next: () => {
         alert('נרשמת בהצלחה!');
-        this.router.navigate(['/login']);
+        this.router.navigate(['/products']);
       },
       error: () => {
         alert('שגיאה בהרשמה');
