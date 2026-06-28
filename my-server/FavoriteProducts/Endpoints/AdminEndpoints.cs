@@ -1,5 +1,4 @@
-﻿using FavoriteProducts.Data.Entities;
-using FavoriteProducts.DTO;
+﻿using FavoriteProducts.DTO;
 using FavoriteProducts.Services;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
@@ -19,9 +18,14 @@ public static class AdminEndpoints
         return app;
     }
 
-    private static async Task<Ok<List<User>>> GetUsers(AppDbContext db)
+    private static async Task<Ok<List<UserDto>>> GetUsers(AppDbContext db)
     {
-        var users = await db.Users.ToListAsync();
+        var users = await db.Users
+            .Select(u => new UserDto(
+                u.Id,
+                u.UserName
+            ))
+            .ToListAsync();
 
         return TypedResults.Ok(users);
     }
