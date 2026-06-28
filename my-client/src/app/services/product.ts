@@ -2,6 +2,8 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environment/environment';
+import { Product } from '../models/product';
+import { User } from '../models/user';
 
 @Injectable({
   providedIn: 'root'
@@ -14,18 +16,22 @@ export class ProductsService {
 
  private authHeaders(): HttpHeaders {
   const token = localStorage.getItem('token');
+   if (!token) {
+    return new HttpHeaders();
+  }
   return new HttpHeaders({ Authorization: `Bearer ${token}` });
 
 }
 
-  getProducts(): Observable<any[]> {
-    return this.http.get<any[]>(`${this.apiUrl}/products`);
+  getProducts(): Observable<Product[]> {
+    return this.http.get<Product[]>(`${this.apiUrl}/products`,
+     { headers:this.authHeaders() } 
+    );
   }
 
  getFavorites(): Observable<number[]> {
-  const token = localStorage.getItem('token');
   return this.http.get<number[]>(`${this.apiUrl}/favorites`, 
-    { headers: { Authorization: `Bearer ${token}` } });
+    { headers: this.authHeaders()});
 }
 
 addFavorite(productId: number): Observable<any> {
@@ -38,11 +44,10 @@ removeFavorite(productId: number): Observable<any> {
     { headers: this.authHeaders() });
 }
 
-  getUsers(): Observable<any[]> {
-  const token = localStorage.getItem('token');
-  return this.http.get<any[]>(
+  getUsers(): Observable<User[]> {
+  return this.http.get<User[]>(
     `${this.apiUrl}/users`,
-    { headers: { Authorization: `Bearer ${token}` } }
+    { headers:this.authHeaders() }
   );
 }
 

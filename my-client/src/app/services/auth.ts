@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { environment } from '../../environment/environment';
+import { LoginResponse } from '../models/login-response.model';
 
 @Injectable({
   providedIn: 'root'
@@ -24,9 +25,7 @@ saveSession(res: any): void {
   localStorage.setItem('userName', res.userName ?? res.UserName);
   localStorage.setItem('role', res.role ?? res.Role);
 
-  const payload = this.decodeToken(res.token);
-  console.log('JWT payload:', payload); // תראי לי מה יוצא
-  
+  const payload = this.decodeToken(res.token);  
  const userId =
   payload?.['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier'];
 
@@ -35,15 +34,35 @@ if (userId) localStorage.setItem('userId', userId.toString());
 
   // שמירה אחרי login-as (impersonation)
   saveImpersonation(token: string): void {
-  localStorage.setItem('adminToken', localStorage.getItem('token')!); 
+  const adminToken = localStorage.getItem('token');
+
+  if (!adminToken) {
+    this.router.navigate(['/login']);
+    return;
+  }
+
+  localStorage.setItem('adminToken', adminToken);
   localStorage.setItem('token', token);
+
   const payload = this.decodeToken(token);
-  if (payload) {
-    localStorage.setItem('userName', decodeURIComponent(escape(payload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name'] ?? '')));
-    localStorage.setItem('role', 'User');
-    localStorage.setItem('isImpersonating', 'true');
-    const userId = payload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier'];
-    if (userId) localStorage.setItem('userId', userId.toString());
+
+  if (!payload) {
+    return;
+  }
+
+  localStorage.setItem(
+    'userName',
+    payload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name'] ?? ''
+  );
+
+  localStorage.setItem('role', 'User');
+  localStorage.setItem('isImpersonating', 'true');
+
+  const userId =
+    payload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier'];
+
+  if (userId) {
+    localStorage.setItem('userId', userId.toString());
   }
 }
 
@@ -52,13 +71,37 @@ if (userId) localStorage.setItem('userId', userId.toString());
     return id ? parseInt(id) : null;
   }
 backToAdmin(): void {
-  const adminToken = localStorage.getItem('adminToken')!;
+  const adminToken = localStorage.getItem('adminToken');
+
+  if (!adminToken) {
+    this.logout();
+    return;
+  }
+
   localStorage.setItem('token', adminToken);
   localStorage.removeItem('adminToken');
   localStorage.removeItem('isImpersonating');
+
+  const payload = this.decodeToken(adminToken);
+
   localStorage.setItem('role', 'Admin');
-  localStorage.setItem('userName', 'admin');
-  localStorage.setItem('userId', '0');
+
+  if (payload) {
+    const userName =
+      payload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name'] ?? 'admin';
+
+    const userId =
+      payload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier'];
+
+    localStorage.setItem('userName', userName);
+
+    if (userId) {
+      localStorage.setItem('userId', userId.toString());
+    }
+  } else {
+    localStorage.setItem('userName', 'admin');
+    localStorage.setItem('userId', '0');
+  }
 }
   getUserName(): string {
     return localStorage.getItem('userName') ?? '';

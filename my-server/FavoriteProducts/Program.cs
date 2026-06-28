@@ -50,11 +50,11 @@ app.UseHttpsRedirection();
 app.MapGet("/products", async (AppDbContext db) =>
 {
     return await db.Products.ToListAsync();
-});
+}).RequireAuthorization();
 app.MapGet("/users", async (AppDbContext db) =>
 {
     return await db.Users.ToListAsync();
-}).RequireAuthorization();
+}).RequireAuthorization(policy => policy.RequireRole("Admin"));
 app.MapGet("/favorites", async (AppDbContext db, HttpContext http) =>
 {
     var userId = int.Parse(http.User.FindFirst(ClaimTypes.NameIdentifier)!.Value);

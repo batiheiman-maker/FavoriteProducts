@@ -1,5 +1,4 @@
 import { Component, OnInit, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { ProductsService } from '../services/product';
 import { Auth } from '../services/auth';
@@ -7,7 +6,6 @@ import { Auth } from '../services/auth';
 @Component({
   selector: 'app-admin',
   standalone: true,
-  imports: [CommonModule],
   templateUrl: './admin.html',
   styleUrl: './admin.css'
 })
@@ -24,11 +22,6 @@ export class Admin implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    if (!this.auth.isAdmin()) {
-      this.router.navigate(['/guards']);
-      return;
-    }
-
     this.loadUsers();
   }
 

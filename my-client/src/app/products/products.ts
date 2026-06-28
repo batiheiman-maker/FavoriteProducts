@@ -1,5 +1,4 @@
 import { Component, OnInit, signal, computed } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { ProductsService } from '../services/product';
 import { Auth } from '../services/auth';
@@ -8,7 +7,6 @@ import { forkJoin } from 'rxjs';
 @Component({
   selector: 'app-products',
   standalone: true,
-  imports: [CommonModule],
   templateUrl: './products.html',
   styleUrl: './products.css'
 })
@@ -19,7 +17,7 @@ export class Products implements OnInit {
   userName = signal('');
   isImpersonating = signal(false);
 
-  hasProducts = computed(() => this.products().length > 0);
+ hasProducts = computed(() => this.products().length > 0);
 
   constructor(
     private productsService: ProductsService,
@@ -32,11 +30,6 @@ export class Products implements OnInit {
   }
 
   ngOnInit(): void {
-    if (!this.auth.isLoggedIn()) {
-      this.router.navigate(['/login']);
-      return;
-    }
-
     this.userName.set(this.auth.getUserName());
     this.isImpersonating.set(this.auth.isImpersonating());
     this.loadAll();
@@ -63,17 +56,28 @@ export class Products implements OnInit {
     });
   }
 
-  toggleFavorite(product: any): void {
-    if (product.isFavorite) {
-      this.productsService.removeFavorite(product.id).subscribe();
-    } else {
-      this.productsService.addFavorite(product.id).subscribe();
-    }
+toggleFavorite(product: any): void {
+  const action$ = product.isFavorite
+    ? this.productsService.removeFavorite(product.id)
+    : this.productsService.addFavorite(product.id);
 
-    this.products.update(list =>
-      list.map(p => p.id === product.id ? { ...p, isFavorite: !p.isFavorite } : p)
-    );
-  }
+  const newValue = !product.isFavorite;
+
+  action$.subscribe({
+    next: () => {
+      this.products.update(list =>
+        list.map(p =>
+          p.id === product.id
+            ? { ...p, isFavorite: newValue }
+            : p
+        )
+      );
+    },
+    error: () => {
+      alert('שגיאה בעדכון המועדפים');
+    }
+  });
+}
 
   logout(): void {
     this.auth.logout();

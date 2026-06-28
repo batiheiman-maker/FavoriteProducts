@@ -6,14 +6,7 @@
       @if (isImpersonating()) {
         <span class="impersonating-badge">מצב צפייה כמשתמש</span>
           <button (click)="backToAdmin()" class="btn-secondary">חזור לניהול</button>
-
       }
-    </div>
-    <div class="header-actions">
-      @if (isAdmin() && !isImpersonating()) {
-        <button (click)="goToAdmin()" class="btn-secondary">לוח מנהל</button>
-      }
-      <button (click)="logout()" class="btn-logout">יציאה</button>
     </div>
   </header>
 
