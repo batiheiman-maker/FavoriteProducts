@@ -2,17 +2,17 @@
 
   <header class="admin-header">
     <h2>לוח מנהל</h2>
-    <button (click)="logout()" class="btn-logout">יציאה</button>
+    <button (click)="store.logout()" class="btn-logout">יציאה</button>
   </header>
 
   <main>
     <h3>רשימת משתמשים</h3>
 
-    @if (loading()) {
+    @if (store.loading()) {
       <p class="loading-msg">טוען משתמשים...</p>
-    } @else if (errorMsg()) {
-      <p class="error">{{ errorMsg() }}</p>
-    } @else if (users().length === 0) {
+    } @else if (store.errorMsg()) {
+      <p class="error">{{ store.errorMsg() }}</p>
+    } @else if (store.users().length === 0) {
       <p>אין משתמשים רשומים.</p>
     } @else {
       <table class="users-table">
@@ -23,13 +23,14 @@
             <th>כניסה כמשתמש</th>
           </tr>
         </thead>
+
         <tbody>
-          @for (user of users(); track user.id) {
+          @for (user of store.users(); track user.id) {
             <tr>
               <td>{{ user.id }}</td>
               <td>{{ user.userName }}</td>
               <td>
-                <button class="btn-login-as" (click)="loginAs(user)">
+                <button class="btn-login-as" (click)="store.loginAs(user.id)">
                   כנס כ־{{ user.userName }}
                 </button>
               </td>
