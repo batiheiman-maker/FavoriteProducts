@@ -35,7 +35,7 @@ if (userId) localStorage.setItem('userId', userId.toString());
 
   // שמירה אחרי login-as (impersonation)
   saveImpersonation(token: string): void {
-  localStorage.setItem('adminToken', localStorage.getItem('token')!); // ← שמירת טוקן מנהל
+  localStorage.setItem('adminToken', localStorage.getItem('token')!); 
   localStorage.setItem('token', token);
   const payload = this.decodeToken(token);
   if (payload) {

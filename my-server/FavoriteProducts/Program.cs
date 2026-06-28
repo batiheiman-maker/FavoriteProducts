@@ -47,21 +47,9 @@ app.UseCors("AllowAngular");
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseHttpsRedirection();
-const string ProductsCacheKey = "products_all";
-
-app.MapGet("/products", async (AppDbContext db, IMemoryCache cache) =>
+app.MapGet("/products", async (AppDbContext db) =>
 {
-    var products = await cache.GetOrCreateAsync(ProductsCacheKey, async entry =>
-    {
-        entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5);
-        entry.SlidingExpiration = TimeSpan.FromMinutes(2);
-
-        return await db.Products
-            .AsNoTracking()
-            .ToListAsync();
-    });
-
-    return Results.Ok(products);
+    return await db.Products.ToListAsync();
 });
 app.MapGet("/users", async (AppDbContext db) =>
 {
