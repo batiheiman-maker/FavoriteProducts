@@ -4,17 +4,42 @@
 
     <h2 class="title">Register</h2>
 
-    <form [formGroup]="registerForm" (ngSubmit)="register()">
-
+<form [formGroup]="store.registerForm" (ngSubmit)="store.register()">
       <div class="field">
-        <input type="text" placeholder="User name" formControlName="userName" />
+        <input
+          type="text"
+          placeholder="User name"
+          formControlName="userName"
+        />
       </div>
 
       <div class="field">
-        <input type="password" placeholder="Password" formControlName="password" />
+        <input
+          type="password"
+          placeholder="Password"
+          formControlName="password"
+        />
       </div>
 
-      <button type="submit">הרשמה</button>
+     @if (store.errorMsg()) {
+  <p class="error">{{ store.errorMsg() }}</p>
+}
+
+@if (store.successMsg()) {
+  <p class="success">{{ store.successMsg() }}</p>
+}
+
+      <button
+  type="submit"
+  [disabled]="store.registerForm.invalid || store.loading()"
+>
+      >
+        @if (store.loading()) {
+          נרשם...
+        } @else {
+          הרשמה
+        }
+      </button>
 
     </form>
 

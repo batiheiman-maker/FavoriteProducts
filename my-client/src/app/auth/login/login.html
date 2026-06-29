@@ -5,7 +5,7 @@
     <h2>כניסה לחשבון</h2>
     <p class="subtitle">ברוך הבא! הזן את פרטיך להמשך</p>
 
-    <form [formGroup]="loginForm" (ngSubmit)="login()">
+    <form [formGroup]="store.loginForm" (ngSubmit)="store.login()">
 
       <div class="field">
         <label>שם משתמש</label>
@@ -25,12 +25,20 @@
         />
       </div>
 
-      @if (errorMsg) {
-        <p class="error">{{ errorMsg }}</p>
+      @if (store.errorMsg()) {
+        <p class="error">{{ store.errorMsg() }}</p>
       }
 
-      <button type="submit" class="btn" [disabled]="loginForm.invalid">
-        כניסה
+      <button
+        type="submit"
+        class="btn"
+        [disabled]="store.loginForm.invalid || store.loading()"
+      >
+        @if (store.loading()) {
+          מתחבר...
+        } @else {
+          כניסה
+        }
       </button>
 
     </form>

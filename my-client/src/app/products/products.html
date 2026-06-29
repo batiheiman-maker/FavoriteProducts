@@ -2,29 +2,52 @@
 
   <header class="products-header">
     <div class="header-info">
-      <span>שלום, <strong>{{ userName() }}</strong></span>
-      @if (isImpersonating()) {
+      <span>שלום, <strong>{{ store.userName() }}</strong></span>
+
+      @if (store.isImpersonating()) {
         <span class="impersonating-badge">מצב צפייה כמשתמש</span>
-          <button (click)="backToAdmin()" class="btn-secondary">חזור לניהול</button>
+        <button (click)="store.backToAdmin()" class="btn-secondary">
+          חזור לניהול
+        </button>
       }
+    </div>
+
+    <div class="header-actions">
+      @if (store.isAdmin() && !store.isImpersonating()) {
+        <button (click)="store.goToAdmin()" class="btn-secondary">
+          לוח מנהל
+        </button>
+      }
+
+      <button (click)="store.logout()" class="btn-logout">
+        יציאה
+      </button>
     </div>
   </header>
 
   <main class="products-main">
+    <input
+  type="text"
+  placeholder="חיפוש מוצר"
+  [formControl]="store.searchControl"
+/>
     <h2>רשימת מוצרים</h2>
 
-    @if (loading()) {
+    @if (store.loading()) {
       <p class="loading-msg">טוען מוצרים...</p>
-    } @else if (!hasProducts()) {
+    } @else if (store.errorMsg()) {
+      <p class="error">{{ store.errorMsg() }}</p>
+    } @else if (!store.filteredProducts()) {
       <p>לא נמצאו מוצרים.</p>
     } @else {
       <ul class="products-list">
-        @for (product of products(); track product.id) {
+       @for (product of store.filteredProducts(); track product.id) {
           <li class="product-item" [class.favorite]="product.isFavorite">
             <span class="product-name">{{ product.productName }}</span>
+
             <button
               class="fav-btn"
-              (click)="toggleFavorite(product)"
+              (click)="store.toggleFavorite(product)"
               [title]="product.isFavorite ? 'הסר ממועדפים' : 'הוסף למועדפים'"
             >
               {{ product.isFavorite ? '❤️' : '🤍' }}
