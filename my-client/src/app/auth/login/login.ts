@@ -8,6 +8,7 @@ import { LoginStore } from '../../stores/login';
   standalone: true,
   imports: [ReactiveFormsModule, RouterLink],
   templateUrl: './login.html',
+  providers: [LoginStore],
   styleUrl: './login.css'
 })
 export class Login {
@@ -22,6 +23,6 @@ export class Login {
     const userName = this.loginForm.value.userName ?? '';
     const password = this.loginForm.value.password ?? '';
 
-    this.store.login();
+    this.store.login(userName, password);
   }
 }

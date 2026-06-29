@@ -1,56 +1,76 @@
-import { Injectable, inject, signal } from '@angular/core';
+import { inject } from '@angular/core';
 import { Router } from '@angular/router';
+import { patchState, signalStore, withMethods, withState } from '@ngrx/signals';
 import { ProductsService } from '../services/product';
 import { Auth } from '../services/auth';
+import { User } from '../models/user';
 
-type AdminUser = {
-  id: number;
-  userName: string;
+type AdminState = {
+  users: User[];
+  loading: boolean;
+  errorMsg: string;
 };
 
-@Injectable({
-  providedIn: 'root'
-})
-export class AdminStore {
-  private productsService = inject(ProductsService);
-  private auth = inject(Auth);
-  private router = inject(Router);
+const initialState: AdminState = {
+  users: [],
+  loading: false,
+  errorMsg: '',
+};
 
-  users = signal<AdminUser[]>([]);
-  loading = signal(false);
-  errorMsg = signal('');
+export const AdminStore = signalStore(
+  withState(initialState),
 
-  loadUsers(): void {
-    this.loading.set(true);
-    this.errorMsg.set('');
+  withMethods((store) => {
+    const productsService = inject(ProductsService);
+    const auth = inject(Auth);
+    const router = inject(Router);
 
-    this.productsService.getUsers().subscribe({
-      next: (users: AdminUser[]) => {
-        this.users.set(users);
-        this.loading.set(false);
+    return {
+      loadUsers(): void {
+        patchState(store, {
+          loading: true,
+          errorMsg: '',
+        });
+
+        productsService.getUsers().subscribe({
+          next: (users: User[]) => {
+            patchState(store, {
+              users,
+              loading: false,
+            });
+          },
+
+          error: () => {
+            patchState(store, {
+              errorMsg: 'שגיאה בטעינת משתמשים',
+              loading: false,
+            });
+          },
+        });
       },
-      error: () => {
-        this.errorMsg.set('שגיאה בטעינת משתמשים');
-        this.loading.set(false);
-      }
-    });
-  }
 
-  loginAs(userId: number): void {
-    this.errorMsg.set('');
+      loginAs(userId: number): void {
+        patchState(store, {
+          errorMsg: '',
+        });
 
-    this.productsService.loginAs(userId).subscribe({
-      next: (res: any) => {
-        this.auth.saveImpersonation(res.token);
-        this.router.navigate(['/products']);
+        productsService.loginAs(userId).subscribe({
+          next: (res: any) => {
+            auth.saveImpersonation(res.token);
+            router.navigate(['/products']);
+          },
+
+          error: () => {
+            patchState(store, {
+              errorMsg: 'שגיאה בכניסה כמשתמש',
+            });
+          },
+        });
       },
-      error: () => {
-        this.errorMsg.set('שגיאה בכניסה כמשתמש');
-      }
-    });
-  }
 
-  logout(): void {
-    this.auth.logout();
-  }
-}
+      logout(): void {
+        auth.logout();
+      },
+    };
+  })
+);

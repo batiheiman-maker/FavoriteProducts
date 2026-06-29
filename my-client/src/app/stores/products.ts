@@ -1,104 +1,152 @@
-import { Injectable, computed, inject, signal } from '@angular/core';
+import { computed, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { forkJoin } from 'rxjs';
+import {
+  patchState,
+  signalStore,
+  withComputed,
+  withMethods,
+  withState,
+} from '@ngrx/signals';
+
 import { ProductsService } from '../services/product';
 import { Auth } from '../services/auth';
+import { Product } from '../models/product';
 
-type Product = {
-  id: number;
-  name: string;
-  price?: number;
-  imageUrl?: string;
-  isFavorite: boolean;
+type ProductsState = {
+  products: Product[];
+  loading: boolean;
+  errorMsg: string;
+  userName: string;
+  isImpersonating: boolean;
+  isAdmin: boolean;
+  searchText: string;
 };
 
-@Injectable({
-  providedIn: 'root'
-})
-export class ProductsStore {
-  private productsService = inject(ProductsService);
-  private auth = inject(Auth);
-  private router = inject(Router);
+const initialState: ProductsState = {
+  products: [],
+  loading: false,
+  errorMsg: '',
+  userName: '',
+  isImpersonating: false,
+  isAdmin: false,
+  searchText:  ''
+};
 
-  products = signal<Product[]>([]);
-  loading = signal(false);
-  errorMsg = signal('');
+export const ProductsStore = signalStore(
+  withState(initialState),
 
-  userName = signal('');
-  isImpersonating = signal(false);
-  isAdmin = signal(false);
+  withComputed((store) => ({
+    hasProducts: computed(() => store.products().length > 0),
+      filteredProducts: computed(() => {
+    const searchText = store.searchText().trim().toLowerCase();
 
-  hasProducts = computed(() => this.products().length > 0);
+    if (!searchText) {
+      return store.products();
+    }
 
-  initPage(): void {
-    this.userName.set(this.auth.getUserName());
-    this.isImpersonating.set(this.auth.isImpersonating());
-    this.isAdmin.set(this.auth.isAdmin());
+    return store.products().filter(product =>
+      product.productName.toLowerCase().includes(searchText)
+    );
+  }),
+  })),
 
-    this.loadAll();
-  }
+  withMethods((store) => {
+    const productsService = inject(ProductsService);
+    const auth = inject(Auth);
+    const router = inject(Router);
 
-  loadAll(): void {
-    this.loading.set(true);
-    this.errorMsg.set('');
+    return {
+      initPage(): void {
+        patchState(store, {
+          userName: auth.getUserName(),
+          isImpersonating: auth.isImpersonating(),
+          isAdmin: auth.isAdmin(),
+        });
 
-    forkJoin({
-      products: this.productsService.getProducts(),
-      favorites: this.productsService.getFavorites()
-    }).subscribe({
-      next: ({ products, favorites }) => {
-        const productsWithFavorites = products.map((product: any) => ({
-          ...product,
-          isFavorite: favorites.includes(product.id)
-        }));
-
-        this.products.set(productsWithFavorites);
-        this.loading.set(false);
+        this.loadAll();
       },
-      error: (err) => {
-        console.error('Error loading data:', err);
 
-        this.errorMsg.set('שגיאה בטעינת מוצרים');
-        this.loading.set(false);
-      }
-    });
-  }
+      loadAll(): void {
+        patchState(store, {
+          loading: true,
+          errorMsg: '',
+        });
 
-  toggleFavorite(product: Product): void {
-    this.errorMsg.set('');
+        forkJoin({
+          products: productsService.getProducts(),
+          favorites: productsService.getFavorites(),
+        }).subscribe({
+          next: ({ products, favorites }) => {
+            const productsWithFavorites: Product[] = products.map((product: any) => ({
+              ...product,
+              isFavorite: favorites.includes(product.id),
+            }));
 
-    const action$ = product.isFavorite
-      ? this.productsService.removeFavorite(product.id)
-      : this.productsService.addFavorite(product.id);
+            patchState(store, {
+              products: productsWithFavorites,
+              loading: false,
+            });
+          },
 
-    const newValue = !product.isFavorite;
+          error: (err) => {
+            console.error('Error loading data:', err);
 
-    action$.subscribe({
-      next: () => {
-        this.products.update(list =>
-          list.map(p =>
-            p.id === product.id
-              ? { ...p, isFavorite: newValue }
-              : p
-          )
-        );
+            patchState(store, {
+              errorMsg: 'שגיאה בטעינת מוצרים',
+              loading: false,
+            });
+          },
+        });
       },
-      error: () => {
-        this.errorMsg.set('שגיאה בעדכון המועדפים');
-      }
-    });
-  }
 
-  logout(): void {
-    this.auth.logout();
-  }
+      toggleFavorite(product: Product): void {
+        patchState(store, {
+          errorMsg: '',
+        });
 
-  goToAdmin(): void {
-    this.router.navigate(['/admin']);
-  }
+        const action$ = product.isFavorite
+          ? productsService.removeFavorite(product.id)
+          : productsService.addFavorite(product.id);
 
-  backToAdmin(): void {
-    this.auth.backToAdmin();
-    this.router.navigate(['/admin']);
-  }
+        const newValue = !product.isFavorite;
+
+        action$.subscribe({
+          next: () => {
+            const updatedProducts = store.products().map((p) =>
+              p.id === product.id
+                ? { ...p, isFavorite: newValue }
+                : p
+            );
+
+            patchState(store, {
+              products: updatedProducts,
+            });
+          },
+
+          error: () => {
+            patchState(store, {
+              errorMsg: 'שגיאה בעדכון המועדפים',
+            });
+          },
+        });
+      },
+
+      logout(): void {
+        auth.logout();
+      },
+
+      goToAdmin(): void {
+        router.navigate(['/admin']);
+      },
+
+      backToAdmin(): void {
+        auth.backToAdmin();
+        router.navigate(['/admin']);
+      },
+      setSearchText(searchText: string): void {
+  patchState(store, { searchText });
 }
+    };
+  })
+);

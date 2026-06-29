@@ -1,33 +1,60 @@
-import { Injectable, inject, signal } from '@angular/core';
+import { inject } from '@angular/core';
 import { Router } from '@angular/router';
+import { patchState, signalStore, withMethods, withState } from '@ngrx/signals';
 import { Auth } from '../services/auth';
 
-@Injectable({
-  providedIn: 'root'
-})
-export class RegisterStore {
-  private auth = inject(Auth);
-  private router = inject(Router);
+type RegisterState = {
+  loading: boolean;
+  errorMsg: string;
+  successMsg: string;
+};
 
-  loading = signal(false);
-  errorMsg = signal('');
-  successMsg = signal('');
+const initialState: RegisterState = {
+  loading: false,
+  errorMsg: '',
+  successMsg: '',
+};
 
-  register(userName: string, password: string): void {
-    this.loading.set(true);
-    this.errorMsg.set('');
-    this.successMsg.set('');
+export const RegisterStore = signalStore(
+  withState(initialState),
 
-    this.auth.register(userName, password).subscribe({
-      next: () => {
-        this.loading.set(false);
-        this.successMsg.set('נרשמת בהצלחה!');
-        this.router.navigate(['/products']);
+  withMethods((store) => {
+    const auth = inject(Auth);
+    const router = inject(Router);
+
+    return {
+      register(userName: string, password: string): void {
+        patchState(store, {
+          loading: true,
+          errorMsg: '',
+          successMsg: '',
+        });
+
+        auth.register(userName, password).subscribe({
+          next: () => {
+            patchState(store, {
+              loading: false,
+              successMsg: 'נרשמת בהצלחה!',
+            });
+
+            router.navigate(['/products']);
+          },
+
+          error: () => {
+            patchState(store, {
+              loading: false,
+              errorMsg: 'שגיאה בהרשמה',
+            });
+          },
+        });
       },
-      error: () => {
-        this.loading.set(false);
-        this.errorMsg.set('שגיאה בהרשמה');
-      }
-    });
-  }
-}
+
+      clearMessages(): void {
+        patchState(store, {
+          errorMsg: '',
+          successMsg: '',
+        });
+      },
+    };
+  })
+);

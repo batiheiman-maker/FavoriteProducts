@@ -1,47 +1,61 @@
-import { Component } from '@angular/core';
-import { ReactiveFormsModule, FormGroup, FormControl } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { inject } from '@angular/core';
+import { Router } from '@angular/router';
+import { patchState, signalStore, withMethods, withState } from '@ngrx/signals';
 import { Auth } from '../services/auth';
 
-@Component({
-  selector: 'app-login',
-  standalone: true,
-  imports: [ReactiveFormsModule, RouterLink],
-  templateUrl: './login.html',
-  styleUrl: './login.css'
-})
-export class LoginStore {
+type LoginState = {
+  loading: boolean;
+  errorMsg: string;
+};
 
-  errorMsg = '';
+const initialState: LoginState = {
+  loading: false,
+  errorMsg: '',
+};
 
-  loginForm = new FormGroup({
-    userName: new FormControl(''),
-    password: new FormControl('')
-  });
+export const LoginStore = signalStore(
+  withState(initialState),
 
-  constructor(private auth: Auth, private router: Router) {}
+  withMethods((store) => {
+    const auth = inject(Auth);
+    const router = inject(Router);
 
-  login() {
-    this.errorMsg = '';
+    return {
+      login(userName: string, password: string): void {
+        patchState(store, {
+          errorMsg: '',
+          loading: true,
+        });
 
-    const userName = this.loginForm.value.userName ?? '';
-    const password = this.loginForm.value.password ?? '';
+        auth.login(userName, password).subscribe({
+          next: (res: any) => {
+            auth.saveSession(res);
 
-    this.auth.login(userName, password).subscribe({
-      next: (res: any) => {
-        console.log('role:', res.role);
+            patchState(store, {
+              loading: false,
+            });
 
-        this.auth.saveSession(res);
+            if (res.role === 'Admin') {
+              router.navigate(['/admin']);
+            } else {
+              router.navigate(['/products']);
+            }
+          },
 
-        if (res.role === 'Admin') {
-          this.router.navigate(['/admin']);
-        } else {
-          this.router.navigate(['/products']);
-        }
+          error: () => {
+            patchState(store, {
+              errorMsg: 'שם משתמש או סיסמה שגויים',
+              loading: false,
+            });
+          },
+        });
       },
-      error: () => {
-        this.errorMsg = 'שם משתמש או סיסמה שגויים';
-      }
-    });
-  }
-}
+
+      clearError(): void {
+        patchState(store, {
+          errorMsg: '',
+        });
+      },
+    };
+  })
+);

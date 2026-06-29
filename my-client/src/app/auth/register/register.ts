@@ -8,7 +8,8 @@ import { RegisterStore } from '../../stores/register';
   standalone: true,
   imports: [ReactiveFormsModule, RouterLink],
   templateUrl: './register.html',
-  styleUrl: './register.css'
+  styleUrl: './register.css',
+  providers:[RegisterStore]
 })
 export class Register {
   store = inject(RegisterStore);

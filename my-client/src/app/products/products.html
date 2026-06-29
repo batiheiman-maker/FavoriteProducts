@@ -26,17 +26,22 @@
   </header>
 
   <main class="products-main">
+    <input
+  type="text"
+  placeholder="חיפוש מוצר"
+  [formControl]="searchControl"
+/>
     <h2>רשימת מוצרים</h2>
 
     @if (store.loading()) {
       <p class="loading-msg">טוען מוצרים...</p>
     } @else if (store.errorMsg()) {
       <p class="error">{{ store.errorMsg() }}</p>
-    } @else if (!store.hasProducts()) {
+    } @else if (!store.filteredProducts()) {
       <p>לא נמצאו מוצרים.</p>
     } @else {
       <ul class="products-list">
-        @for (product of store.products(); track product.id) {
+       @for (product of store.filteredProducts(); track product.id) {
           <li class="product-item" [class.favorite]="product.isFavorite">
             <span class="product-name">{{ product.productName }}</span>
 

@@ -1,59 +1,17 @@
-import { Component, OnInit, signal } from '@angular/core';
-import { Router } from '@angular/router';
-import { ProductsService } from '../services/product';
-import { Auth } from '../services/auth';
+import { Component, OnInit, inject } from '@angular/core';
+import { AdminStore } from '../stores/admin';
 
 @Component({
   selector: 'app-admin',
   standalone: true,
   templateUrl: './admin.html',
-  styleUrl: './admin.css'
+  styleUrl: './admin.css',
+  providers: [AdminStore],
 })
 export class Admin implements OnInit {
-
-  users = signal<any[]>([]);
-  loading = signal(true);
-  errorMsg = signal('');
-
-  constructor(
-    private productsService: ProductsService,
-    private auth: Auth,
-    private router: Router
-  ) {}
+  store = inject(AdminStore);
 
   ngOnInit(): void {
-    this.loadUsers();
-  }
-
-  loadUsers(): void {
-    this.loading.set(true);
-    this.errorMsg.set('');
-
-    this.productsService.getUsers().subscribe({
-      next: (users) => {
-        this.users.set(users);
-        this.loading.set(false);
-      },
-      error: () => {
-        this.errorMsg.set('שגיאה בטעינת משתמשים');
-        this.loading.set(false);
-      }
-    });
-  }
-
-  loginAs(user: any): void {
-    this.productsService.loginAs(user.id).subscribe({
-      next: (res: any) => {
-        this.auth.saveImpersonation(res.token);
-        this.router.navigate(['/products']);
-      },
-      error: () => {
-        alert('שגיאה בכניסה כמשתמש');
-      }
-    });
-  }
-
-  logout(): void {
-    this.auth.logout();
+    this.store.loadUsers();
   }
 }
