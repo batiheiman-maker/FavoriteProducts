@@ -1,5 +1,5 @@
 import { Component, inject } from '@angular/core';
-import { ReactiveFormsModule, FormGroup, FormControl } from '@angular/forms';
+import { ReactiveFormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { LoginStore } from '../../stores/login';
 
@@ -8,21 +8,9 @@ import { LoginStore } from '../../stores/login';
   standalone: true,
   imports: [ReactiveFormsModule, RouterLink],
   templateUrl: './login.html',
+  styleUrl: './login.css',
   providers: [LoginStore],
-  styleUrl: './login.css'
 })
 export class Login {
-  store = inject(LoginStore);
-
-  loginForm = new FormGroup({
-    userName: new FormControl(''),
-    password: new FormControl('')
-  });
-
-  login(): void {
-    const userName = this.loginForm.value.userName ?? '';
-    const password = this.loginForm.value.password ?? '';
-
-    this.store.login(userName, password);
-  }
+  readonly store = inject(LoginStore);
 }

@@ -1,6 +1,14 @@
 import { inject } from '@angular/core';
+import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
-import { patchState, signalStore, withMethods, withState } from '@ngrx/signals';
+import {
+  patchState,
+  signalStore,
+  withMethods,
+  withProps,
+  withState,
+} from '@ngrx/signals';
+
 import { Auth } from '../services/auth';
 
 type LoginState = {
@@ -16,15 +24,35 @@ const initialState: LoginState = {
 export const LoginStore = signalStore(
   withState(initialState),
 
+  withProps(() => ({
+    loginForm: new FormGroup({
+      userName: new FormControl('', {
+        nonNullable: true,
+        validators: [Validators.required],
+      }),
+      password: new FormControl('', {
+        nonNullable: true,
+        validators: [Validators.required],
+      }),
+    }),
+  })),
+
   withMethods((store) => {
     const auth = inject(Auth);
     const router = inject(Router);
 
     return {
-      login(userName: string, password: string): void {
+      login(): void {
+        if (store.loginForm.invalid || store.loading()) {
+          store.loginForm.markAllAsTouched();
+          return;
+        }
+
+        const { userName, password } = store.loginForm.getRawValue();
+
         patchState(store, {
-          errorMsg: '',
           loading: true,
+          errorMsg: '',
         });
 
         auth.login(userName, password).subscribe({
@@ -44,8 +72,8 @@ export const LoginStore = signalStore(
 
           error: () => {
             patchState(store, {
-              errorMsg: 'שם משתמש או סיסמה שגויים',
               loading: false,
+              errorMsg: 'שם משתמש או סיסמה שגויים',
             });
           },
         });

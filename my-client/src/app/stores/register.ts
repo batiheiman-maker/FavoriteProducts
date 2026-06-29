@@ -1,6 +1,14 @@
 import { inject } from '@angular/core';
+import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
-import { patchState, signalStore, withMethods, withState } from '@ngrx/signals';
+import {
+  patchState,
+  signalStore,
+  withMethods,
+  withProps,
+  withState,
+} from '@ngrx/signals';
+
 import { Auth } from '../services/auth';
 
 type RegisterState = {
@@ -18,12 +26,32 @@ const initialState: RegisterState = {
 export const RegisterStore = signalStore(
   withState(initialState),
 
+  withProps(() => ({
+    registerForm: new FormGroup({
+      userName: new FormControl('', {
+        nonNullable: true,
+        validators: [Validators.required],
+      }),
+      password: new FormControl('', {
+        nonNullable: true,
+        validators: [Validators.required],
+      }),
+    }),
+  })),
+
   withMethods((store) => {
     const auth = inject(Auth);
     const router = inject(Router);
 
     return {
-      register(userName: string, password: string): void {
+      register(): void {
+        if (store.registerForm.invalid || store.loading()) {
+          store.registerForm.markAllAsTouched();
+          return;
+        }
+
+        const { userName, password } = store.registerForm.getRawValue();
+
         patchState(store, {
           loading: true,
           errorMsg: '',

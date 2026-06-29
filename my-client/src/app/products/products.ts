@@ -1,6 +1,6 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, inject } from '@angular/core';
+import { ReactiveFormsModule } from '@angular/forms';
 import { ProductsStore } from '../stores/products';
-import { ReactiveFormsModule, FormControl } from '@angular/forms';
 
 @Component({
   selector: 'app-products',
@@ -8,15 +8,8 @@ import { ReactiveFormsModule, FormControl } from '@angular/forms';
   templateUrl: './products.html',
   styleUrl: './products.css',
   providers: [ProductsStore],
-  imports:[ReactiveFormsModule]
+  imports: [ReactiveFormsModule],
 })
-export class Products implements OnInit {
-  store = inject(ProductsStore);
-searchControl = new FormControl('');
-  ngOnInit(): void {
-    this.store.initPage();
-      this.searchControl.valueChanges.subscribe((value) => {
-    this.store.setSearchText(value ?? '');
-  });
-  }
+export class Products {
+  readonly store = inject(ProductsStore);
 }

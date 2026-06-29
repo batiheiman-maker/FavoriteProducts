@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { AdminStore } from '../stores/admin';
 
 @Component({
@@ -8,10 +8,6 @@ import { AdminStore } from '../stores/admin';
   styleUrl: './admin.css',
   providers: [AdminStore],
 })
-export class Admin implements OnInit {
-  store = inject(AdminStore);
-
-  ngOnInit(): void {
-    this.store.loadUsers();
-  }
+export class Admin {
+  readonly store = inject(AdminStore);
 }

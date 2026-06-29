@@ -1,12 +1,23 @@
 import { inject } from '@angular/core';
 import { Router } from '@angular/router';
-import { patchState, signalStore, withMethods, withState } from '@ngrx/signals';
+import {
+  patchState,
+  signalStore,
+  withHooks,
+  withMethods,
+  withState,
+} from '@ngrx/signals';
+
 import { ProductsService } from '../services/product';
 import { Auth } from '../services/auth';
-import { User } from '../models/user';
+
+type AdminUser = {
+  id: number;
+  userName: string;
+};
 
 type AdminState = {
-  users: User[];
+  users: AdminUser[];
   loading: boolean;
   errorMsg: string;
 };
@@ -33,7 +44,7 @@ export const AdminStore = signalStore(
         });
 
         productsService.getUsers().subscribe({
-          next: (users: User[]) => {
+          next: (users: AdminUser[]) => {
             patchState(store, {
               users,
               loading: false,
@@ -72,5 +83,11 @@ export const AdminStore = signalStore(
         auth.logout();
       },
     };
+  }),
+
+  withHooks({
+    onInit(store) {
+      store.loadUsers();
+    },
   })
 );

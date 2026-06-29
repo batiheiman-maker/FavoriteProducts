@@ -1,11 +1,14 @@
 import { computed, inject } from '@angular/core';
+import { FormControl } from '@angular/forms';
 import { Router } from '@angular/router';
-import { forkJoin } from 'rxjs';
+import { forkJoin, Subscription } from 'rxjs';
 import {
   patchState,
   signalStore,
   withComputed,
+  withHooks,
   withMethods,
+  withProps,
   withState,
 } from '@ngrx/signals';
 
@@ -30,31 +33,71 @@ const initialState: ProductsState = {
   userName: '',
   isImpersonating: false,
   isAdmin: false,
-  searchText:  ''
+  searchText: '',
 };
 
 export const ProductsStore = signalStore(
   withState(initialState),
 
+  withProps(() => ({
+    searchControl: new FormControl('', {
+      nonNullable: true,
+    }),
+  })),
+
   withComputed((store) => ({
     hasProducts: computed(() => store.products().length > 0),
-      filteredProducts: computed(() => {
-    const searchText = store.searchText().trim().toLowerCase();
 
-    if (!searchText) {
-      return store.products();
-    }
+    filteredProducts: computed(() => {
+      const searchText = store.searchText().trim().toLowerCase();
 
-    return store.products().filter(product =>
-      product.productName.toLowerCase().includes(searchText)
-    );
-  }),
+      if (!searchText) {
+        return store.products();
+      }
+
+      return store.products().filter((product) =>
+        product.productName.toLowerCase().includes(searchText)
+      );
+    }),
   })),
 
   withMethods((store) => {
     const productsService = inject(ProductsService);
     const auth = inject(Auth);
     const router = inject(Router);
+
+    const loadAll = (): void => {
+      patchState(store, {
+        loading: true,
+        errorMsg: '',
+      });
+
+      forkJoin({
+        products: productsService.getProducts(),
+        favorites: productsService.getFavorites(),
+      }).subscribe({
+        next: ({ products, favorites }) => {
+          const productsWithFavorites: Product[] = products.map((product: Product) => ({
+            ...product,
+            isFavorite: favorites.includes(product.id),
+          }));
+
+          patchState(store, {
+            products: productsWithFavorites,
+            loading: false,
+          });
+        },
+
+        error: (err) => {
+          console.error('Error loading data:', err);
+
+          patchState(store, {
+            errorMsg: 'שגיאה בטעינת מוצרים',
+            loading: false,
+          });
+        },
+      });
+    };
 
     return {
       initPage(): void {
@@ -64,40 +107,13 @@ export const ProductsStore = signalStore(
           isAdmin: auth.isAdmin(),
         });
 
-        this.loadAll();
+        loadAll();
       },
 
-      loadAll(): void {
-        patchState(store, {
-          loading: true,
-          errorMsg: '',
-        });
+      loadAll,
 
-        forkJoin({
-          products: productsService.getProducts(),
-          favorites: productsService.getFavorites(),
-        }).subscribe({
-          next: ({ products, favorites }) => {
-            const productsWithFavorites: Product[] = products.map((product: any) => ({
-              ...product,
-              isFavorite: favorites.includes(product.id),
-            }));
-
-            patchState(store, {
-              products: productsWithFavorites,
-              loading: false,
-            });
-          },
-
-          error: (err) => {
-            console.error('Error loading data:', err);
-
-            patchState(store, {
-              errorMsg: 'שגיאה בטעינת מוצרים',
-              loading: false,
-            });
-          },
-        });
+      setSearchText(searchText: string): void {
+        patchState(store, { searchText });
       },
 
       toggleFavorite(product: Product): void {
@@ -144,9 +160,24 @@ export const ProductsStore = signalStore(
         auth.backToAdmin();
         router.navigate(['/admin']);
       },
-      setSearchText(searchText: string): void {
-  patchState(store, { searchText });
-}
+    };
+  }),
+
+  withHooks((store) => {
+    let searchSubscription: Subscription | null = null;
+
+    return {
+      onInit(): void {
+        store.initPage();
+
+        searchSubscription = store.searchControl.valueChanges.subscribe((value) => {
+          store.setSearchText(value);
+        });
+      },
+
+      onDestroy(): void {
+        searchSubscription?.unsubscribe();
+      },
     };
   })
 );

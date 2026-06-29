@@ -1,5 +1,5 @@
 import { Component, inject } from '@angular/core';
-import { FormGroup, FormControl, ReactiveFormsModule } from '@angular/forms';
+import { ReactiveFormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { RegisterStore } from '../../stores/register';
 
@@ -9,20 +9,8 @@ import { RegisterStore } from '../../stores/register';
   imports: [ReactiveFormsModule, RouterLink],
   templateUrl: './register.html',
   styleUrl: './register.css',
-  providers:[RegisterStore]
+  providers: [RegisterStore],
 })
 export class Register {
-  store = inject(RegisterStore);
-
-  registerForm = new FormGroup({
-    userName: new FormControl(''),
-    password: new FormControl('')
-  });
-
-  register(): void {
-    const userName = this.registerForm.value.userName ?? '';
-    const password = this.registerForm.value.password ?? '';
-
-    this.store.register(userName, password);
-  }
+  readonly store = inject(RegisterStore);
 }
